@@ -1,0 +1,4 @@
+# Machine Learning Checkpoint Files
+# Exclude large optimizer state files
+**/optimizer.pt
+
