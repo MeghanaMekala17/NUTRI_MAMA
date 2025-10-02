@@ -1,0 +1,30 @@
+# Web Framework
+fastapi==0.115.0
+uvicorn==0.30.6
+
+# API Calls
+requests==2.32.3
+httpx==0.27.2
+
+# Data Handling
+pydantic==2.9.2
+python-dotenv==1.0.1
+
+# Caching
+cachetools==5.5.0
+
+# AI / ML Models
+transformers==4.45.2
+
+scikit-learn==1.5.2
+
+# OpenAI + Hugging Face
+openai==1.45.0
+huggingface-hub==0.25.2
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+
+# Utilities
+loguru==0.7.2
