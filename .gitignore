@@ -1,4 +1,18 @@
-# Machine Learning Checkpoint Files
-# Exclude large optimizer state files
+# Ignore logs
+backend/app/ml_scripts/logs/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore optimizer states
 **/optimizer.pt
 
+# Ignore temporary notebook files
+.ipynb_checkpoints/
+
+# Ignore environment files
+.env
+
+# Ignore large trained model files
+*.safetensors
