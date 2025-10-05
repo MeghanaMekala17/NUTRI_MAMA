@@ -1,25 +1,27 @@
-import os
 import json
-import time
 from typing import Dict, Any, List
 from google import genai
 from google.genai.errors import APIError
 
-# 🔑 WARNING: API Key is hardcoded as requested.
+# Hardcoded API key as requested
 GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE" 
-
-# --- KNOWLEDGE BASE SNIPPETS ---
-ICMR_GUIDANCE = """
-1. Trimester 1 (Weeks 1-12): Focus on Folate, Vitamin B6.
-2. Trimester 2 (Weeks 13-27): Focus on Iron, Calcium.
-3. Iron-Rich Indian Foods: Lentils (dal), Spinach (palak), Jaggery (gud), Ragi, Poha, Red Meat/Liver.
-4. Calcium-Rich Indian Foods: Curds (Dahi), Paneer, Milk, Tofu, Ragi.
-5. Dietary Constraints: Avoid simple sugars and high glycemic index foods for Gestational Diabetes. Calcium inhibits iron absorption; consume iron and calcium meals at least 2 hours apart.
-"""
-# ---------------------------------
 
 class AIPlannerService:
     def __init__(self, model_name="gemini-2.5-flash"):
+        self.model_name = model_name
+        self.client = None
+        
+        if not GEMINI_API_KEY:
+            return
+        
+        try:
+            self.client = genai.Client(api_key=GEMINI_API_KEY)
+        except Exception:
+            self.client = None
+
+    import json
+class AIPlannerService:
+    def init(self, model_name="gemini-2.5-flash"):
         self.model_name = model_name
         self.client = None
         
@@ -29,79 +31,68 @@ class AIPlannerService:
         try:
             self.client = genai.Client(api_key=GEMINI_API_KEY)
         except Exception:
-            self.client = None
+            self.client=None
 
-    def generate_meal_guidance(self, 
-                              trimester: int, 
-                              anemia_risk: bool, 
-                              user_region: str,
-                              comorbidities: List[str],
-                              supplements: List[str],
-                              literacy_level: str) -> Dict[str, Any]:
-        """
-        Generates personalized, structured meal guidance.
-        """
-        if not self.client:
-            return {"status": "error", "message": "AI client not available. Key missing or invalid."}
-
-        # --- CONSOLIDATED PROMPT (Forces Structured Output) ---
-        user_prompt = f"""
-        # INSTRUCTION: You are an expert Indian maternal nutritionist. Provide culturally relevant, 
-        trimester-specific meal recommendations based strictly on the ICMR guidelines and user constraints. 
-        Your ENTIRE RESPONSE MUST be a SINGLE, VALID JSON OBJECT, with NO TEXT BEFORE OR AFTER.
-
-        # User Profile:
-        Current Trimester: {trimester}
-        Anemia Risk: {anemia_risk}
-        Known Comorbidities: {', '.join(comorbidities) or 'None'}
-        Current Supplements: {', '.join(supplements) or 'None'}
-        User's Region: {user_region}
-        Literacy Level: {literacy_level}
-        
-        # ICMR/WHO Guidelines (Internal Reference):
-        {ICMR_GUIDANCE}
-        
-        # Output Structure and Content Rules:
-        1. Determine the top priority nutrient.
-        2. Suggest ONE specific Indian dish/food item appropriate for the region.
-        3. Consolidate ALL safety notes (diabetes/calcium timing) and nutritional justification into a single field named 'comprehensive_advice_for_asha'.
-        4. If the literacy level is 'Low', keep the language in 'comprehensive_advice_for_asha' very simple.
-        5. If 'Anemia Risk' is True, prioritize Iron above all else.
-        """
-        
-        # --- DEFINE JSON SCHEMA ---
-        output_schema = {
-            "type": "object",
-            "properties": {
-                "priority_nutrient": {"type": "string"},
-                "suggested_food_item": {"type": "string"},
-                "comprehensive_advice_for_asha": {"type": "string"}
-            },
-            "required": ["priority_nutrient", "suggested_food_item", "comprehensive_advice_for_asha"]
+    def generate_meal_guidance(self, trimester, anemia_risk, user_region, comorbidities, supplements, literacy_level):
+        # Placeholder logic for demonstration
+        # You should replace this with your actual meal planning logic.
+        guidance = {
+            "trimester": trimester,
+            "anemia_risk": anemia_risk,
+            "user_region": user_region,
+            "comorbidities": comorbidities,
+            "supplements": supplements,
+            "literacy_level": literacy_level,
+            "recommended_meals": [
+                "Iron-rich spinach dal",
+                "Protein-packed lentils",
+                "Vitamin C rich citrus fruits"
+            ],
+            "advice": "Ensure plenty of hydration and regular meals."
         }
+        return guidance
         
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=user_prompt, 
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": output_schema,
-                    "temperature": 0.3
-                }
-            )
-            
-            text_response = response.text.strip()
-            
-            # Final parsing attempt
-            if text_response.startswith('```json'):
-                text_response = text_response.strip('```json').strip('```').strip()
-            
-            guidance_data = json.loads(text_response)
-            
-            return {"status": "success", "guidance": guidance_data}
-        
-        except APIError as e:
-            return {"status": "error", "message": f"Gemini API Error (Quota/Key Issue): {e}"}
-        except Exception as e:
-            return {"status": "error", "message": f"Parsing/Unexpected Error: {e}"}
+def collect_user_input():
+    try:
+        trimester = int(input("Enter current trimester (1, 2, or 3): "))
+        anemia_risk = input("Is there anemia risk? (yes/no): ").strip().lower() == "yes"
+        user_region = input("Enter your region (e.g., North India, South India): ").strip()
+        comorbidities = input("List known comorbidities (comma-separated, or 'none'): ").strip()
+        comorbidities_list = [c.strip() for c in comorbidities.split(",")] if comorbidities.lower() != "none" else []
+        supplements = input("List current supplements (comma-separated, or 'none'): ").strip()
+        supplements_list = [s.strip() for s in supplements.split(",")] if supplements.lower() != "none" else []
+        literacy_level = input("Enter literacy level (Low/Medium/High): ").strip().capitalize()
+        return {
+            "trimester": trimester,
+            "anemia_risk": anemia_risk,
+            "user_region": user_region,
+            "comorbidities": comorbidities_list,
+            "supplements": supplements_list,
+            "literacy_level": literacy_level
+        }
+    except Exception as e:
+        print(f"Error collecting input: {e}")
+        return None
+
+def main():
+    user_data = collect_user_input()  # You must define this function
+    if user_data:
+        planner = AIPlannerService()
+        result = planner.generate_meal_guidance(
+            trimester=user_data["trimester"],
+            anemia_risk=user_data["anemia_risk"],
+            user_region=user_data["user_region"],
+            comorbidities=user_data["comorbidities"],
+            supplements=user_data["supplements"],
+            literacy_level=user_data["literacy_level"]
+        )
+        print("\n--- Personalized Meal Guidance Output ---")
+        print(json.dumps(result, indent=2))
+        return result
+    else:
+        print("No input provided or an error occurred.")
+        return None
+
+# Fix the if condition for execution
+if __name__ == "__main__":
+    main()
